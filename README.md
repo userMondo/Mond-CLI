@@ -26,6 +26,9 @@ This batch script provides a simple command-line interface (CLI) for managing ex
 - **`mond delete <alias>`**  
   Removes the alias and its associated executable path from the configuration file.
 
+- **`mond rename <old_alias> <new_alias>`**  
+  Renames an existing alias to a new name.
+
 ## Configuration
 
 The script uses a configuration file named `aliases.cfg` to store aliases and their paths. This file is created in the same directory as the script. A temporary file `temp.cfg` is used for alias deletion operations.
