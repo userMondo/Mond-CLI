@@ -11,6 +11,7 @@ if "%~1"=="list" goto :list
 if "%~1"=="run" goto :run
 if "%~1"=="delete" goto :delete
 if "%~1"=="rename" goto :rename
+if "%~1"=="changepath" goto :changepath
 goto :usage
 
 :add
@@ -78,7 +79,7 @@ if not exist "!EXEC_PATH!" (
 start "" "!EXEC_PATH!"
 goto :eof
 
-:delete
+:del
 if "%~2"=="" goto :usage
 if not exist "%CONFIG_FILE%" (
     echo No aliases found.
@@ -115,35 +116,13 @@ if not exist "%CONFIG_FILE%" (
     goto :eof
 )
 
+REM Rename the alias
 set "FOUND=0"
-set "NEW_ALIAS_EXISTS=0"
-
-REM Check if the original alias exists and the new alias does not already exist
-for /f "tokens=1,* delims==" %%A in (%CONFIG_FILE%) do (
-    if "%%A"=="%~2" (
-        set "FOUND=1"
-        set "OLD_EXEC_PATH=%%B"
-    )
-    if "%%A"=="%~3" (
-        set "NEW_ALIAS_EXISTS=1"
-    )
-)
-
-if %FOUND%==0 (
-    echo Error: Alias "%~2" not found.
-    goto :eof
-)
-
-if %NEW_ALIAS_EXISTS%==1 (
-    echo Error: Alias "%~3" already exists.
-    goto :eof
-)
-
-REM Rename the alias in the configuration file
 (
     for /f "tokens=1,* delims==" %%A in (%CONFIG_FILE%) do (
         if "%%A"=="%~2" (
-            echo %~3=!OLD_EXEC_PATH!
+            set "FOUND=1"
+            echo %~3=%%B
         ) else (
             echo %%A=%%B
         )
@@ -151,8 +130,48 @@ REM Rename the alias in the configuration file
 ) > "%TEMP_FILE%"
 
 REM Replace the original configuration file with the updated one
-move /y "%TEMP_FILE%" "%CONFIG_FILE%"
-echo Renamed alias "%~2" to "%~3"
+if %FOUND%==0 (
+    echo Error: Alias not found: "%~2"
+    del "%TEMP_FILE%"
+) else (
+    move /y "%TEMP_FILE%" "%CONFIG_FILE%"
+    echo Renamed alias "%~2" to "%~3"
+)
+goto :eof
+
+:cp
+if "%~2"=="" goto :usage
+if "%~3"=="" goto :usage
+if not exist "%~3" (
+    echo Error: File does not exist: "%~3"
+    goto :eof
+)
+if not exist "%CONFIG_FILE%" (
+    echo No aliases found.
+    goto :eof
+)
+
+REM Change the path associated with the alias
+set "FOUND=0"
+(
+    for /f "tokens=1,* delims==" %%A in (%CONFIG_FILE%) do (
+        if "%%A"=="%~2" (
+            set "FOUND=1"
+            echo %%A="%~3"
+        ) else (
+            echo %%A=%%B
+        )
+    )
+) > "%TEMP_FILE%"
+
+REM Replace the original configuration file with the updated one
+if %FOUND%==0 (
+    echo Error: Alias not found: "%~2"
+    del "%TEMP_FILE%"
+) else (
+    move /y "%TEMP_FILE%" "%CONFIG_FILE%"
+    echo Updated path for alias "%~2" to "%~3"
+)
 goto :eof
 
 :usage
@@ -168,10 +187,13 @@ echo.
 echo mond run ^<alias^>
 echo    Launches the executable associated with the given alias.
 echo.
-echo mond delete ^<alias^>
+echo mond del ^<alias^>
 echo    Removes the alias and its associated executable path from the configuration file.
 echo.
 echo mond rename ^<old_alias^> ^<new_alias^>
-echo    Renames an existing alias to a new name.
+echo    Renames an existing alias.
+echo.
+echo mond cp ^<alias^> ^<new_path\to\file.exe^>
+echo    Changes the executable path associated with the given alias.
 echo.
 goto :eof

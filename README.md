@@ -23,11 +23,14 @@ This batch script provides a simple command-line interface (CLI) for managing ex
 - **`mond run <alias>`**  
   Launches the executable associated with the specified alias.
 
-- **`mond delete <alias>`**  
+- **`mond del <alias>`**  
   Removes the alias and its associated executable path from the configuration file.
 
 - **`mond rename <old_alias> <new_alias>`**  
   Renames an existing alias to a new name.
+
+- **`mond cp <alias> <new_path\to\file.exe>`**  
+  Changes the executable path associated with the given alias.
 
 ## Configuration
 
